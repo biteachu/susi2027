@@ -59,6 +59,11 @@
   .legend{font-size:.78rem; color:var(--sub); margin-top:8px;}
   .legend span{display:inline-block; padding:1px 8px; border-radius:4px; margin-right:6px;}
   #dayDetail li{margin:4px 0; font-size:.88rem;}
+  .q-item{border-bottom:1px solid var(--line); padding:8px 2px;}
+  /* 일정 팝업 */
+  .modal-bg{display:none; position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:100; align-items:center; justify-content:center; padding:16px;}
+  .modal-bg.open{display:flex;}
+  .modal{background:#fff; border-radius:12px; padding:16px; max-width:640px; width:100%; max-height:80vh; overflow:auto; box-shadow:0 10px 40px rgba(0,0,0,.2);}
 </style>
 </head>
 <body>
@@ -96,10 +101,16 @@
   <div class="cal" id="cal"></div>
   <div class="legend">
     <span class="ev 면접">면접</span><span class="ev 발표">발표</span><span class="ev 충원">충원발표</span>
-    &nbsp;날짜를 클릭하면 아래에 상세 목록이 표시됩니다. (필터 적용됨)
+    &nbsp;날짜 칸에는 종류별 건수만 표시됩니다. 날짜를 클릭하면 상세 팝업이 뜹니다. (필터 적용됨)
   </div>
-  <div id="dayDetailWrap" style="margin-top:10px; display:none;">
-    <b id="dayDetailTitle"></b>
+</div>
+
+<div id="modalBg" class="modal-bg" onclick="closeModal(event)">
+  <div class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <b id="dayDetailTitle"></b>
+      <button class="gray" onclick="closeModal()">✕ 닫기</button>
+    </div>
     <ul id="dayDetail"></ul>
   </div>
 </div>
@@ -107,7 +118,7 @@
 <h2>지원 내역 <span class="small" id="cnt"></span></h2>
 <div class="tbl-wrap">
   <table id="tbl">
-    <thead><tr><th>학번</th><th>이름</th><th>#</th><th>대학</th><th>모집단위</th><th>구분</th><th>전형명</th><th>6회제한</th><th>접수</th><th>면접일</th><th>발표일</th><th>충원발표</th><th>결과</th><th>메모</th><th>수정시각</th></tr></thead>
+    <thead><tr><th>학번</th><th>이름</th><th>#</th><th>대학</th><th>모집단위</th><th>구분</th><th>전형명</th><th>수험번호</th><th>6회제한</th><th>접수</th><th>면접일</th><th>발표일</th><th>충원발표</th><th>결과</th><th>메모</th><th>수정시각</th></tr></thead>
     <tbody></tbody>
   </table>
 </div>
@@ -120,9 +131,18 @@
   </table>
 </div>
 
+<h2>💬 면접 기출·후기 관리</h2>
+<div class="card">
+  <div class="toolbar">
+    <button class="gray" onclick="loadQ()">🔄 기출 불러오기</button>
+    <input id="qFilter" placeholder="대학명/학과 검색" oninput="renderQ()" style="flex:1; min-width:140px;">
+  </div>
+  <div id="qList" style="margin-top:8px;"><p class="small">교사 키 입력 후 불러오면 작성자 학번과 함께 표시됩니다. 부적절한 글은 삭제하세요.</p></div>
+</div>
+
 <script>
 // ★ 선생님: Apps Script 배포 후 받은 웹 앱 URL을 여기에 붙여넣으세요. (student.html과 동일 URL)
-const API_URL = 'https://script.google.com/macros/s/AKfycbzUKQXBj_cPLnQ7Qg8YW_XIOSi2HMLInlpg9tL2ikVoQeLznt1Q0DY-CQhKpbOPNjv7/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzkZDr8Q4gwDHcLqv3gDMbIrUBzPhYrQcNNlVnkVls4AEOxFhClTYXH-WBaaoPDGsAJ/exec';
 
 // 열: 0수정시각 1학번 2이름 3지원번호 4대학 5학과 6전형구분 7전형명 8제한 9접수 10면접 11발표 12충원 13결과 14메모
 let ROWS = [];
@@ -201,6 +221,7 @@ function render(){
       <td>${r[1]}</td><td>${esc(r[2])}</td><td>${r[3]}</td><td>${esc(r[4])}</td><td>${esc(r[5])}</td>
       <td><span class="tag t-${typeKey(r[6])}">${esc(r[6])}</span></td>
       <td>${esc(r[7])}</td>
+      <td>${esc(r[17] || '')}</td>
       <td>${r[8] === '예외' ? '<span class="tag t-예외">예외</span>' : '포함'}</td>
       <td>${r[9]}</td><td>${r[10]}</td><td>${r[11]}</td><td>${r[12]}</td>
       <td class="${r[13].includes('불합격')?'r-불합격':r[13].includes('충원합격')?'r-충원':r[13].includes('합격')?'r-합격':''}">${esc(r[13])}</td>
@@ -242,7 +263,7 @@ function allEvents(){
     const track = r[7];
     [[r[10],'면접'],[r[11],'발표'],[r[12],'충원']].forEach(([d, kind]) => {
       const ds = toISO(d);
-      if (ds) evs.push({date: ds, kind, who, what, track, name: r[2]});
+      if (ds) evs.push({date: ds, kind, who, what, track, name: r[2], examno: r[17] || ''});
     });
   });
   return evs;
@@ -273,30 +294,38 @@ function renderCal(){
   for (let d = 1; d <= daysInMonth; d++) {
     const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const list = byDate[ds] || [];
-    const shown = list.slice(0, 3).map(e => `<div class="ev ${e.kind}">${esc(e.name)} ${e.kind === '면접' ? '면접' : e.kind === '발표' ? '발표' : '충원'}</div>`).join('');
-    const more = list.length > 3 ? `<div class="more">+${list.length - 3}건 더</div>` : '';
+    const counts = {};
+    list.forEach(e => { counts[e.kind] = (counts[e.kind] || 0) + 1; });
+    const shown = ['면접','발표','충원'].filter(k => counts[k]).map(k => `<div class="ev ${k}">${k} ${counts[k]}</div>`).join('');
     const cls = ['day', ds === todayStr ? 'today' : '', ds === selDate ? 'sel' : ''].filter(Boolean).join(' ');
-    html += `<div class="${cls}" onclick="selectDay('${ds}')"><span class="dnum">${d}</span>${shown}${more}</div>`;
+    html += `<div class="${cls}" onclick="selectDay('${ds}')"><span class="dnum">${d}</span>${shown}</div>`;
   }
   document.getElementById('cal').innerHTML = html;
   renderDayDetail(byDate);
 }
 
 function selectDay(ds){
-  selDate = (selDate === ds) ? null : ds;
+  selDate = ds;
+  renderCal();
+}
+
+function closeModal(ev){
+  if (ev && ev.target !== document.getElementById('modalBg')) return; // 팝업 내부 클릭은 무시
+  selDate = null;
+  document.getElementById('modalBg').classList.remove('open');
   renderCal();
 }
 
 function renderDayDetail(byDate){
-  const wrap = document.getElementById('dayDetailWrap');
-  if (!selDate || !(byDate[selDate] || []).length) { wrap.style.display = 'none'; return; }
-  wrap.style.display = 'block';
-  const list = byDate[selDate];
+  const bg = document.getElementById('modalBg');
+  const list = (selDate && byDate[selDate]) || [];
+  if (!selDate || !list.length) { bg.classList.remove('open'); return; }
+  bg.classList.add('open');
   document.getElementById('dayDetailTitle').textContent = `${selDate} 일정 (${list.length}건)`;
   const order = {면접: 0, 발표: 1, 충원: 2};
   list.sort((a,b) => (order[a.kind] - order[b.kind]) || a.who.localeCompare(b.who));
   document.getElementById('dayDetail').innerHTML =
-    list.map(e => `<li><span class="ev ${e.kind}">${e.kind}</span> <b>${esc(e.who)}</b> — ${esc(e.what)} (${esc(e.track)})</li>`).join('');
+    list.map(e => `<li><span class="ev ${e.kind}">${e.kind}</span> <b>${esc(e.who)}</b> — ${esc(e.what)} (${esc(e.track)})${e.examno ? ' · 수험번호 <b>' + esc(e.examno) + '</b>' : ''}</li>`).join('');
 }
 
 function toISO(s){
@@ -310,9 +339,45 @@ function toISO(s){
 
 function esc(s){ return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
+/* ---------- 면접 기출 관리 ---------- */
+let Q_ROWS = []; // [시각, 대학, 학과, 전형명, 내용, 작성자학번, id]
+async function loadQ(){
+  const key = document.getElementById('tkey').value.trim();
+  if (!key) return showErr('교사 키를 입력하세요.');
+  clearErr();
+  try {
+    const res = await fetch(`${API_URL}?action=qlist&key=${encodeURIComponent(key)}`);
+    const data = await res.json();
+    if (!data.ok) return showErr(data.error);
+    Q_ROWS = data.rows;
+    renderQ();
+  } catch(e){ showErr('기출 불러오기 실패. 인터넷 연결을 확인하세요.'); }
+}
+function renderQ(){
+  const f = document.getElementById('qFilter').value.trim();
+  const rows = Q_ROWS.filter(r => !f || String(r[1]).includes(f) || String(r[2]).includes(f));
+  document.getElementById('qList').innerHTML = rows.length ? rows.map(r => `
+    <div class="q-item">
+      <div class="small">🏫 <b>${esc(r[1])}</b> ${esc(r[2])} · ${esc(r[3])} · ${esc(r[0])} · 작성자 ${esc(r[5])}
+        <button class="gray" style="padding:2px 8px; font-size:.75rem; margin-left:6px;" onclick="delQ('${r[6]}')">삭제</button></div>
+      <div style="font-size:.88rem; white-space:pre-wrap;">${esc(r[4])}</div>
+    </div>`).join('') : '<p class="small">등록된 기출·후기가 없습니다.</p>';
+}
+async function delQ(id){
+  if (!confirm('이 글을 삭제할까요? 되돌릴 수 없습니다.')) return;
+  const key = document.getElementById('tkey').value.trim();
+  try {
+    const res = await fetch(`${API_URL}?action=qdel&key=${encodeURIComponent(key)}&id=${encodeURIComponent(id)}`);
+    const data = await res.json();
+    if (!data.ok) return showErr(data.error);
+    Q_ROWS = Q_ROWS.filter(r => r[6] !== id);
+    renderQ();
+  } catch(e){ showErr('삭제 실패. 인터넷 연결을 확인하세요.'); }
+}
+
 function exportCSV(){
   if (!ROWS.length) return showErr('먼저 현황을 불러오세요.');
-  const header = ['수정시각','학번','이름','지원번호','대학명','모집단위','전형구분','전형명','6회제한','접수완료','면접일','발표일','충원발표일','결과','메모'];
+  const header = ['수정시각','학번','이름','지원번호','대학명','모집단위','전형구분','전형명','6회제한','접수완료','면접일','발표일','충원발표일','결과','메모','체크리스트','최저기준','수험번호'];
   const lines = [header].concat(filtered()).map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(','));
   const blob = new Blob(['﻿' + lines.join('\r\n')], {type:'text/csv;charset=utf-8;'});
   const a = document.createElement('a');
