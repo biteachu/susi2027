@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>수시 지원현황 입력</title>
+<style>
+  :root{
+    --blue:#2563eb; --blue-d:#1d4ed8; --bg:#f1f5f9; --card:#ffffff;
+    --line:#e2e8f0; --text:#0f172a; --sub:#64748b; --green:#16a34a; --red:#dc2626; --amber:#d97706; --purple:#a21caf;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif; background:var(--bg); color:var(--text); padding:16px; max-width:760px; margin:0 auto;}
+  h1{font-size:1.3rem; margin:8px 0 4px;}
+  h2{font-size:1.05rem; margin:18px 0 8px;}
+  .sub{color:var(--sub); font-size:.85rem; margin-bottom:16px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:14px;}
+  label{display:block; font-size:.8rem; color:var(--sub); margin:8px 0 3px;}
+  input,select,textarea{width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px; font-size:.95rem; font-family:inherit;}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--blue); border-color:transparent;}
+  .row{display:flex; gap:10px;}
+  .row>div{flex:1;}
+  .slot-head{display:flex; justify-content:space-between; align-items:center; cursor:pointer;}
+  .slot-title{font-weight:bold; font-size:1rem;}
+  .slot-summary{font-size:.8rem; color:var(--sub);}
+  .slot-body{display:none; margin-top:8px;}
+  .slot.open .slot-body{display:block;}
+  .badge{font-size:.72rem; padding:2px 8px; border-radius:99px; background:#eff6ff; color:var(--blue);}
+  .badge.ex{background:#fdf4ff; color:var(--purple);}
+  button{cursor:pointer; border:none; border-radius:10px; font-size:1rem; font-family:inherit;}
+  .btn-main{width:100%; padding:14px; background:var(--blue); color:#fff; font-weight:bold; margin-top:6px;}
+  .btn-main:hover{background:var(--blue-d);}
+  .btn-sub{padding:9px 14px; background:#e2e8f0; color:var(--text); font-size:.85rem;}
+  .btn-add{width:100%; padding:10px; background:#fff; color:var(--blue); border:2px dashed var(--blue); font-size:.9rem; margin-bottom:14px;}
+  .msg{padding:12px; border-radius:8px; margin:10px 0; font-size:.9rem; display:none;}
+  .msg.ok{display:block; background:#f0fdf4; color:var(--green); border:1px solid #bbf7d0;}
+  .msg.err{display:block; background:#fef2f2; color:var(--red); border:1px solid #fecaca;}
+  .warn{background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:8px 12px; font-size:.85rem; color:#92400e; margin:8px 0;}
+  .notice{font-size:.8rem; color:var(--sub); line-height:1.5; margin-top:10px;}
+  .counter{font-size:.85rem; margin:8px 0; color:var(--sub);}
+  .counter b{color:var(--blue);}
+  datalist{display:none;}
+  /* D-day 배너 */
+  .dday{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;}
+  .dchip{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:8px 14px; font-size:.85rem;}
+  .dchip b{color:var(--red);}
+  .dchip.today{border-color:var(--red); background:#fef2f2;}
+  /* 체크리스트 */
+  .chk-row{display:flex; gap:4px; flex-wrap:wrap; margin-top:10px;}
+  .chk-row label{display:flex; align-items:center; gap:4px; font-size:.78rem; color:var(--text); background:#f8fafc; border:1px solid var(--line); border-radius:8px; padding:5px 8px; margin:0; cursor:pointer;}
+  .chk-row input{width:auto; padding:0;}
+  .prog{height:6px; background:#e2e8f0; border-radius:99px; margin-top:6px; overflow:hidden;}
+  .prog-fill{height:100%; background:var(--green); width:0%; transition:width .3s;}
+  /* 링크 */
+  .links{display:flex; gap:8px; flex-wrap:wrap;}
+  .links a{font-size:.85rem; color:var(--blue); text-decoration:none; background:#eff6ff; padding:7px 12px; border-radius:8px;}
+  /* 최저 판정 */
+  .grades{display:grid; grid-template-columns:repeat(6,1fr); gap:6px;}
+  .mr-ok{color:var(--green); font-weight:bold;}
+  .mr-no{color:var(--red); font-weight:bold;}
+  .mr-none{color:var(--sub);}
+  #minResults li{margin:5px 0; font-size:.9rem;}
+  /* 기출 */
+  .q-item{border-bottom:1px solid var(--line); padding:10px 2px;}
+  .q-meta{font-size:.78rem; color:var(--sub); margin-bottom:3px;}
+  .q-body{font-size:.9rem; white-space:pre-wrap; line-height:1.5;}
+  /* 캘린더 */
+  .cal-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .cal-title{font-weight:bold;}
+  .cal-nav{background:#e2e8f0; color:var(--text); padding:5px 12px; font-size:.9rem;}
+  .cal{display:grid; grid-template-columns:repeat(7,1fr); gap:2px;}
+  .cal .dow{text-align:center; font-size:.72rem; color:var(--sub); padding:4px 0;}
+  .cal .day{min-height:56px; background:#fff; border:1px solid var(--line); border-radius:6px; padding:3px; font-size:.7rem; overflow:hidden;}
+  .cal .day.out{background:#f8fafc; color:#cbd5e1;}
+  .cal .day.today{outline:2px solid var(--blue);}
+  .cal .dnum{font-size:.72rem; color:var(--sub);}
+  .ev{border-radius:4px; padding:1px 3px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .ev.면접{background:#dbeafe; color:#1d4ed8;}
+  .ev.발표{background:#dcfce7; color:#15803d;}
+  .ev.충원{background:#fef3c7; color:#b45309;}
+  .legend{font-size:.75rem; color:var(--sub); margin-top:6px;}
+  .legend span{display:inline-block; padding:1px 8px; border-radius:4px; margin-right:6px;}
+  /* 축하 효과 */
+  .confetti{position:fixed; top:-30px; font-size:1.4rem; z-index:999; pointer-events:none; animation:fall linear forwards;}
+  @keyframes fall{ to{ transform:translateY(110vh) rotate(720deg); opacity:.8; } }
+</style>
+</head>
+<body>
+<h1>📮 수시 지원현황 입력</h1>
+<p class="sub">원서 접수한 대학·학과·전형을 <b>접수 즉시</b> 입력해 주세요. 나중에 다시 열어 수정할 수 있습니다.</p>
+
+<div class="dday" id="dday"></div>
+
+<div class="card">
+  <div class="row">
+    <div>
+      <label>학번 (5자리, 예: 30101)</label>
+      <input id="sid" inputmode="numeric" maxlength="5" placeholder="30101">
+    </div>
+    <div>
+      <label>이름</label>
+      <input id="name" placeholder="홍길동">
+    </div>
+  </div>
+  <div class="row">
+    <div>
+      <label>입력 코드 (담임 선생님이 알려준 코드)</label>
+      <input id="code" placeholder="입력 코드">
+    </div>
+    <div>
+      <label>내 비밀번호 (숫자 4자리, 처음 저장 시 자동 등록)</label>
+      <input id="pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••">
+    </div>
+  </div>
+  <div style="margin-top:10px;">
+    <button class="btn-sub" onclick="loadMine()">📥 내가 입력한 내용 불러오기</button>
+  </div>
+  <p class="notice">비밀번호는 내 정보를 다른 친구가 보지 못하게 보호하는 용도입니다. 잊어버리면 선생님께 초기화를 요청하세요.</p>
+</div>
+
+<div class="card">
+  <div class="links">
+    <a href="https://www.uwayapply.com" target="_blank">유웨이어플라이 ↗</a>
+    <a href="https://www.jinhakapply.com" target="_blank">진학어플라이 ↗</a>
+    <a href="https://www.adiga.kr" target="_blank">대학어디가 ↗</a>
+  </div>
+</div>
+
+<div class="counter" id="counter"></div>
+<div id="limitWarn"></div>
+<div id="slots"></div>
+<button class="btn-add" onclick="addSlot()">＋ 지원 추가 (전문대·과기원·사관학교 등 6회 제한 예외 대학 포함)</button>
+
+<div id="msg" class="msg"></div>
+<button class="btn-main" onclick="save()">💾 저장하기</button>
+
+<h2>🗓 내 일정 캘린더</h2>
+<p class="sub">저장했거나 불러온 지원 내역의 면접일·발표일·충원발표일이 표시됩니다.</p>
+<div class="card">
+  <div class="cal-head">
+    <button class="cal-nav" onclick="moveMonth(-1)">◀</button>
+    <span class="cal-title" id="calTitle"></span>
+    <button class="cal-nav" onclick="moveMonth(1)">▶</button>
+  </div>
+  <div class="cal" id="cal"></div>
+  <div class="legend">
+    <span class="ev 면접">면접</span><span class="ev 발표">발표</span><span class="ev 충원">충원발표</span>
+  </div>
+</div>
+
+<h2>🎫 내 수험번호 모아보기</h2>
+<p class="sub">합격자 발표일에 여기서 수험번호를 바로 확인하세요.</p>
+<div class="card">
+  <table style="width:100%; border-collapse:collapse; font-size:.88rem;" id="examTbl">
+    <thead><tr>
+      <th style="text-align:left; border-bottom:1px solid var(--line); padding:6px 4px;">대학 (전형)</th>
+      <th style="text-align:left; border-bottom:1px solid var(--line); padding:6px 4px;">수험번호</th>
+      <th style="text-align:left; border-bottom:1px solid var(--line); padding:6px 4px;">발표일</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<h2>🎯 수능최저 충족 판정</h2>
+<p class="sub">예상(가채점) 등급을 입력하면, 위 지원 내역에 입력한 최저 기준의 충족 여부를 한 번에 확인합니다. <b>성적은 이 기기에만 저장되고 서버로 전송되지 않습니다.</b></p>
+<div class="card">
+  <div class="grades">
+    <div><label>국어</label><select id="gKor"></select></div>
+    <div><label>수학</label><select id="gMath"></select></div>
+    <div><label>영어</label><select id="gEng"></select></div>
+    <div><label>탐구1</label><select id="gTam1"></select></div>
+    <div><label>탐구2</label><select id="gTam2"></select></div>
+    <div><label>한국사</label><select id="gHist"></select></div>
+  </div>
+  <div style="margin-top:10px;"><button class="btn-sub" onclick="evalMinAll()">✅ 충족 여부 확인</button></div>
+  <ul id="minResults"></ul>
+  <p class="notice">⚠ 간이 판정입니다. 수학 선택과목 지정(미적/기하), 탐구 과목 지정(과탐 필수 등), 영어 특례 등 세부 조건은 반영되지 않으니 반드시 모집요강 원문으로 최종 확인하세요.</p>
+</div>
+
+<h2>💬 면접 기출·후기 공유</h2>
+<p class="sub">면접을 본 친구들이 남긴 실제 질문·후기입니다. <b>작성자는 익명으로 표시됩니다.</b> 면접 직후 기억날 때 바로 남겨주세요. 나도 다른 대학 정보를 받는 만큼, 내 것도 나눠주기!</p>
+<div class="card">
+  <div class="row">
+    <div><input id="qFilter" placeholder="대학명으로 검색 (예: 충남대)" oninput="renderQ()"></div>
+    <div style="flex:0 0 auto;"><button class="btn-sub" onclick="loadQ()">🔄 새로고침</button></div>
+  </div>
+  <div id="qList"><p class="notice">위 입력 코드를 채운 뒤 새로고침을 누르면 목록이 표시됩니다.</p></div>
+</div>
+<div class="card">
+  <b style="font-size:.95rem;">✍ 기출·후기 남기기</b>
+  <div class="row">
+    <div><label>대학명</label><input id="qUniv" list="univs" placeholder="예: 충남대학교"></div>
+    <div><label>모집단위(학과)</label><input id="qMajor" placeholder="예: 생물과학과"></div>
+  </div>
+  <label>전형명</label>
+  <input id="qTrack" placeholder="예: 일반전형">
+  <label>받은 질문 / 면접 분위기 / 팁</label>
+  <textarea id="qContent" rows="4" placeholder="예: 지원동기 → 생기부 세특 중 ○○ 탐구 과정 질문 → 마지막으로 하고 싶은 말. 면접관 2명, 10분, 압박 없음."></textarea>
+  <div style="margin-top:8px;"><button class="btn-sub" onclick="addQ()">등록 (익명)</button></div>
+  <p class="notice">욕설·특정인 언급 등 부적절한 내용은 선생님이 확인 후 삭제할 수 있습니다.</p>
+</div>
+
+<p class="notice">
+  · <b>수시 6회 제한</b>: 일반 대학은 최대 6회까지만 지원할 수 있습니다. 단, <b>전문대학, 과학기술원(KAIST·GIST·DGIST·UNIST 등), 사관학교·경찰대학, 산업대학(청운대·호원대)</b> 등은 6회 제한에 포함되지 않아 추가 지원이 가능합니다. 각 지원의 '6회 제한' 항목이 자동으로 표시되지만, <b>반드시 해당 대학 모집요강의 지원횟수 안내를 직접 확인</b>하세요.<br>
+  · 합격 발표 후에는 <b>결과</b> 항목을 꼭 업데이트해 주세요.
+</p>
+
+<datalist id="univs"></datalist>
+
+<script>
+// ★ 선생님: Apps Script 배포 후 받은 웹 앱 URL을 여기에 붙여넣으세요.
+const API_URL = 'https://script.google.com/macros/s/AKfycbzkZDr8Q4gwDHcLqv3gDMbIrUBzPhYrQcNNlVnkVls4AEOxFhClTYXH-WBaaoPDGsAJ/exec';
+
+const MAX_SLOTS = 12;
+
+// 대학명 자동완성 목록 (참고용 - 목록에 없는 대학도 직접 입력하면 그대로 저장됩니다)
+// 전국 4년제 일반대·교육대·과기원·사관학교 등. 코드에서 자동으로 가나다순 정렬됨.
+const UNIV_LIST = ["가천대학교","가톨릭관동대학교","가톨릭대학교","강남대학교","강서대학교","강원대학교","건국대학교","건국대학교(글로컬)","건양대학교","경기대학교","경남대학교","경동대학교","경북대학교","경상국립대학교","경성대학교","경인교육대학교","경일대학교","경희대학교","계명대학교","고려대학교","고려대학교(세종)","고신대학교","공주교육대학교","공주대학교","광운대학교","광주대학교","광주교육대학교","광주여자대학교","국민대학교","군산대학교","극동대학교","금오공과대학교","김천대학교","나사렛대학교","남서울대학교","단국대학교","대구가톨릭대학교","대구교육대학교","대구대학교","대구한의대학교","대전대학교","대진대학교","덕성여자대학교","동국대학교","동국대학교(WISE)","동덕여자대학교","동명대학교","동서대학교","동신대학교","동아대학교","동양대학교","동의대학교","명지대학교","목원대학교","목포대학교","목포해양대학교","배재대학교","백석대학교","부경대학교","부산가톨릭대학교","부산교육대학교","부산대학교","부산외국어대학교","삼육대학교","상명대학교","상지대학교","서강대학교","서경대학교","서울과학기술대학교","서울교육대학교","서울대학교","서울시립대학교","서울신학대학교","서울여자대학교","서원대학교","선문대학교","성결대학교","성공회대학교","성균관대학교","성신여자대학교","세명대학교","세종대학교","세한대학교","송원대학교","수원대학교","숙명여자대학교","순천대학교","순천향대학교","숭실대학교","신라대학교","신한대학교","아주대학교","안동대학교","안양대학교","연세대학교","연세대학교(미래)","영남대학교","영산대학교","용인대학교","우석대학교","우송대학교","울산대학교","원광대학교","위덕대학교","유원대학교","을지대학교","이화여자대학교","인제대학교","인천가톨릭대학교","인천대학교","인하대학교","전남대학교","전북대학교","전주교육대학교","전주대학교","제주대학교","조선대학교","중부대학교","중앙대학교","중원대학교","진주교육대학교","차의과학대학교","창신대학교","창원대학교","청주교육대학교","청주대학교","초당대학교","총신대학교","추계예술대학교","춘천교육대학교","충남대학교","충북대학교","평택대학교","포항공과대학교(POSTECH)","한경국립대학교","한국공학대학교","한국교원대학교","한국교통대학교","한국기술교육대학교","한국성서대학교","한국외국어대학교","한국체육대학교","한국항공대학교","한국해양대학교","한남대학교","한동대학교","한라대학교","한림대학교","한밭대학교","한서대학교","한성대학교","한세대학교","한신대학교","한양대학교","한양대학교(ERICA)","협성대학교","호남대학교","호서대학교","홍익대학교","KAIST(한국과학기술원)","GIST(광주과학기술원)","DGIST(대구경북과학기술원)","UNIST(울산과학기술원)","한국에너지공과대학교(KENTECH)","경찰대학","육군사관학교","해군사관학교","공군사관학교","국군간호사관학교","육군3사관학교","청운대학교","호원대학교"];
+UNIV_LIST.sort((a,b) => a.localeCompare(b,'ko'));
+
+// 6회 제한 예외 자동 감지 목록 (전문대는 이름만으로 판별이 어려워 학생이 직접 선택)
+const EXEMPT_KEYWORDS = ["KAIST","한국과학기술원","GIST","광주과학기술원","DGIST","대구경북과학기술원","UNIST","울산과학기술원","한국에너지공과","KENTECH","육군사관학교","해군사관학교","공군사관학교","국군간호사관학교","육군3사관학교","경찰대학","청운대학교","호원대학교","폴리텍","전문대"];
+
+const TYPE_LIST = ["학생부교과", "학생부종합", "논술", "실기/실적", "기타"];
+const RESULT_LIST = ["", "합격", "불합격", "충원합격(추가합격)", "1단계합격(면접대기)", "충원대기(예비번호)", "미등록"];
+const CHK_STEPS = ["원서접수", "서류확인", "최저확인", "면접준비", "발표확인"];
+
+let slotCount = 0;
+let calYM = null; // [year, month(0-11)]
+let Q_ROWS = [];
+
+function isExempt(univ){
+  const u = String(univ).replace(/\s/g,'');
+  return EXEMPT_KEYWORDS.some(k => u.includes(k));
+}
+
+function addSlot(){
+  if (slotCount >= MAX_SLOTS) { showMsg(`지원 슬롯은 최대 ${MAX_SLOTS}개입니다.`, false); return null; }
+  slotCount++;
+  const i = slotCount;
+  const div = document.createElement('div');
+  div.className = 'card slot' + (i === 1 ? ' open' : '');
+  div.id = 'slot' + i;
+  div.innerHTML = `
+    <div class="slot-head" onclick="toggle(${i})">
+      <span class="slot-title">지원 ${i} <span class="badge" id="badge${i}">미입력</span></span>
+      <span class="slot-summary" id="sum${i}"></span>
+    </div>
+    <div class="prog"><div class="prog-fill" id="prog${i}"></div></div>
+    <div class="slot-body">
+      <div class="row">
+        <div><label>대학명</label><input id="univ${i}" list="univs" placeholder="예: 충남대학교" oninput="onUnivInput(${i})"></div>
+        <div><label>모집단위(학과)</label><input id="major${i}" placeholder="예: 생물과학과"></div>
+      </div>
+      <div class="row">
+        <div><label>전형구분</label><select id="type${i}">${TYPE_LIST.map(t=>`<option>${t}</option>`).join('')}</select></div>
+        <div><label>전형명 (모집요강에 적힌 정확한 이름)</label><input id="track${i}" placeholder="예: 일반전형, 지역인재전형"></div>
+      </div>
+      <div class="row">
+        <div>
+          <label>수시 6회 제한</label>
+          <select id="exempt${i}" onchange="refreshCount()">
+            <option value="">제한 적용 (6회에 포함)</option>
+            <option value="1">제한 예외 (전문대·과기원·사관학교·산업대 등)</option>
+          </select>
+        </div>
+        <div><label>원서접수 완료 여부</label><select id="submitted${i}"><option value="">아직</option><option value="1">접수 완료</option></select></div>
+      </div>
+      <div class="row">
+        <div><label>수험번호 (접수 완료 후 발급됨, 합격 확인용)</label><input id="examno${i}" placeholder="예: 12345678" oninput="renderExamList()"></div>
+        <div></div>
+      </div>
+      <div class="row">
+        <div><label>면접일 (있는 경우)</label><input id="interview${i}" type="date" onchange="renderCal(); renderDday();"></div>
+        <div><label>합격자 발표일</label><input id="announce${i}" type="date" onchange="renderCal(); renderDday();"></div>
+      </div>
+      <div class="row">
+        <div><label>충원(추합) 발표일 / 마감일 (아는 경우)</label><input id="waitlist${i}" type="date" onchange="renderCal(); renderDday();"></div>
+        <div><label>결과 (발표 후 입력)</label><select id="result${i}" onchange="onResult(${i})">${RESULT_LIST.map(r=>`<option>${r}</option>`).join('')}</select></div>
+      </div>
+      <div class="row">
+        <div><label>수능최저: 반영 영역 수 (없으면 비움)</label><select id="mrN${i}"><option value="">최저 없음/모름</option><option value="2">2개 영역 합</option><option value="3">3개 영역 합</option><option value="4">4개 영역 합</option></select></div>
+        <div><label>등급합 기준 (이내)</label><input id="mrM${i}" type="number" min="2" max="24" placeholder="예: 5"></div>
+      </div>
+      <div class="row">
+        <div><label>탐구 반영 방식</label><select id="mrT${i}"><option value="1">상위 1과목</option><option value="2">2과목 평균</option></select></div>
+        <div><label>한국사 조건 (등급 이내, 없으면 비움)</label><select id="mrH${i}"><option value="">없음</option><option>3</option><option>4</option><option>5</option><option>6</option></select></div>
+      </div>
+      <label>메모 (선택)</label>
+      <input id="memo${i}" placeholder="예: 면접 10시 집합, 수험표 지참">
+      <div class="chk-row" id="chkrow${i}">
+        ${CHK_STEPS.map((s,k)=>`<label><input type="checkbox" id="chk${i}_${k}" onchange="updProg(${i})">${s}</label>`).join('')}
+      </div>
+    </div>`;
+  document.getElementById('slots').appendChild(div);
+  refreshCount();
+  return i;
+}
+
+function updProg(i){
+  const total = CHK_STEPS.length;
+  let done = 0;
+  for (let k = 0; k < total; k++) if (document.getElementById(`chk${i}_${k}`).checked) done++;
+  document.getElementById('prog'+i).style.width = Math.round(done/total*100) + '%';
+}
+
+function onUnivInput(i){
+  const u = v('univ'+i).trim();
+  document.getElementById('badge'+i).textContent = u ? '입력됨' : '미입력';
+  document.getElementById('sum'+i).textContent = u;
+  if (u && isExempt(u)) setV('exempt'+i, '1');
+  refreshCount();
+  renderDday();
+  renderExamList();
+}
+
+function renderExamList(){
+  const rows = [];
+  for (let i = 1; i <= slotCount; i++) {
+    const u = v('univ'+i).trim();
+    if (!u) continue;
+    rows.push(`<tr>
+      <td style="padding:6px 4px; border-bottom:1px solid var(--line);">${esc(u)}${v('track'+i) ? ' (' + esc(v('track'+i)) + ')' : ''}</td>
+      <td style="padding:6px 4px; border-bottom:1px solid var(--line); font-weight:bold;">${esc(v('examno'+i)) || '<span style="color:var(--sub); font-weight:normal;">미입력</span>'}</td>
+      <td style="padding:6px 4px; border-bottom:1px solid var(--line);">${esc(v('announce'+i)) || '-'}</td>
+    </tr>`);
+  }
+  document.querySelector('#examTbl tbody').innerHTML = rows.join('') || '<tr><td colspan="3" style="padding:8px 4px; color:var(--sub);">지원 내역을 입력하면 여기에 표시됩니다.</td></tr>';
+}
+
+function refreshCount(){
+  let limited = 0, exempt = 0;
+  for (let i = 1; i <= slotCount; i++) {
+    if (!v('univ'+i).trim()) continue;
+    if (v('exempt'+i) === '1') { exempt++; document.getElementById('badge'+i).className = 'badge ex'; document.getElementById('badge'+i).textContent = '예외'; }
+    else { limited++; document.getElementById('badge'+i).className = 'badge'; document.getElementById('badge'+i).textContent = '6회 포함'; }
+  }
+  document.getElementById('counter').innerHTML =
+    `수시 6회 제한 사용: <b>${limited} / 6</b>` + (exempt ? ` · 제한 예외 지원: <b>${exempt}건</b>` : '');
+  document.getElementById('limitWarn').innerHTML =
+    limited > 6 ? `<div class="warn">⚠ 6회 제한에 포함되는 지원이 ${limited}건입니다. 일반 대학 수시는 최대 6회까지만 지원 가능합니다. '6회 제한' 항목을 다시 확인하세요.</div>` : '';
+}
+
+function toggle(i){ document.getElementById('slot'+i).classList.toggle('open'); }
+function showMsg(text, ok){
+  const m = document.getElementById('msg');
+  m.textContent = text;
+  m.className = 'msg ' + (ok ? 'ok' : 'err');
+  m.scrollIntoView({behavior:'smooth', block:'center'});
+}
+function v(id){ const el = document.getElementById(id); return el ? el.value : ''; }
+function setV(id, val){ const el = document.getElementById(id); if (el) el.value = val || ''; }
+function esc(s){ return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function collect(){
+  const entries = [];
+  for (let i = 1; i <= slotCount; i++) {
+    let chk = '';
+    for (let k = 0; k < CHK_STEPS.length; k++) chk += document.getElementById(`chk${i}_${k}`).checked ? '1' : '0';
+    const minreq = v('mrN'+i) && v('mrM'+i) ? `${v('mrN'+i)}|${v('mrM'+i)}|${v('mrT'+i)}|${v('mrH'+i)}` : '';
+    entries.push({
+      univ: v('univ'+i), major: v('major'+i), type: v('type'+i), track: v('track'+i),
+      exempt: v('exempt'+i) === '1',
+      submitted: v('submitted'+i) === '1', interview: v('interview'+i),
+      announce: v('announce'+i), waitlist: v('waitlist'+i),
+      result: v('result'+i), memo: v('memo'+i),
+      checklist: chk, minreq: minreq, examno: v('examno'+i)
+    });
+  }
+  return entries;
+}
+
+async function save(){
+  const sid = v('sid').trim(), name = v('name').trim(), code = v('code').trim(), pin = v('pin').trim();
+  if (!/^\d{5}$/.test(sid)) return showMsg('학번은 5자리 숫자로 입력하세요. (예: 30101)', false);
+  if (!name) return showMsg('이름을 입력하세요.', false);
+  if (!code) return showMsg('입력 코드를 입력하세요.', false);
+  if (!/^\d{4}$/.test(pin)) return showMsg('비밀번호는 숫자 4자리로 입력하세요.', false);
+  const entries = collect();
+  if (!entries.some(e => e.univ.trim())) return showMsg('최소 1개 대학은 입력해야 합니다.', false);
+  const limited = entries.filter(e => e.univ.trim() && !e.exempt).length;
+  if (limited > 6 && !confirm(`6회 제한에 포함되는 지원이 ${limited}건입니다. 실제로는 6회를 초과해 지원할 수 없습니다.\n'제한 예외' 표시가 빠진 대학이 있는지 확인하세요.\n\n그래도 저장할까요?`)) return;
+  showMsg('저장 중...', true);
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ sid, name, code, pin, entries })
+    });
+    const data = await res.json();
+    if (data.ok) { showMsg(`✅ 저장 완료! (${data.saved}개 지원 내역이 기록되었습니다)`, true); renderCal(); renderDday(); }
+    else showMsg('❌ ' + data.error, false);
+  } catch (err) {
+    showMsg('❌ 전송 실패. 인터넷 연결을 확인하고 다시 시도하세요.', false);
+  }
+}
+
+async function loadMine(){
+  const sid = v('sid').trim(), code = v('code').trim(), pin = v('pin').trim();
+  if (!/^\d{5}$/.test(sid)) return showMsg('먼저 학번(5자리)을 입력하세요.', false);
+  if (!code) return showMsg('입력 코드를 입력하세요.', false);
+  if (!/^\d{4}$/.test(pin)) return showMsg('비밀번호(4자리)를 입력하세요.', false);
+  showMsg('불러오는 중...', true);
+  try {
+    const res = await fetch(`${API_URL}?action=mine&sid=${encodeURIComponent(sid)}&pin=${encodeURIComponent(pin)}&code=${encodeURIComponent(code)}`);
+    const data = await res.json();
+    if (!data.ok) return showMsg('❌ ' + data.error, false);
+    if (!data.rows.length) return showMsg('저장된 내역이 없습니다. 새로 입력해 주세요.', true);
+    // 열: 0수정시각 1학번 2이름 3지원번호 4대학 5학과 6전형구분 7전형명 8제한 9접수 10면접 11발표 12충원 13결과 14메모 15체크리스트 16최저기준
+    document.getElementById('slots').innerHTML = '';
+    slotCount = 0;
+    const maxNo = Math.max(...data.rows.map(r => parseInt(r[3]) || 1));
+    for (let i = 1; i <= Math.max(maxNo, 6); i++) addSlot();
+    data.rows.forEach(r => {
+      const i = parseInt(r[3]);
+      if (i >= 1 && i <= slotCount) {
+        setV('name', r[2]);
+        setV('univ'+i, r[4]); setV('major'+i, r[5]); setV('type'+i, r[6]); setV('track'+i, r[7]);
+        setV('exempt'+i, r[8] === '예외' ? '1' : '');
+        setV('submitted'+i, r[9] === 'O' ? '1' : '');
+        setV('interview'+i, toISO(r[10])); setV('announce'+i, toISO(r[11])); setV('waitlist'+i, toISO(r[12]));
+        setV('result'+i, r[13]); setV('memo'+i, r[14]);
+        const chk = String(r[15] || '');
+        for (let k = 0; k < CHK_STEPS.length; k++) {
+          document.getElementById(`chk${i}_${k}`).checked = chk.charAt(k) === '1';
+        }
+        updProg(i);
+        const mr = String(r[16] || '').split('|');
+        if (mr.length === 4) { setV('mrN'+i, mr[0]); setV('mrM'+i, mr[1]); setV('mrT'+i, mr[2]); setV('mrH'+i, mr[3]); }
+        setV('examno'+i, r[17]);
+        onUnivInput(i);
+        document.getElementById('slot'+i).classList.add('open');
+      }
+    });
+    refreshCount();
+    renderCal();
+    renderDday();
+    showMsg(`✅ ${data.rows.length}개 지원 내역을 불러왔습니다. 수정 후 다시 저장하세요.`, true);
+  } catch (err) {
+    showMsg('❌ 불러오기 실패. 인터넷 연결을 확인하세요.', false);
+  }
+}
+
+function toISO(s){
+  if (!s) return '';
+  s = String(s).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m = s.match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+  if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  return '';
+}
+
+/* ---------- D-day 배너 ---------- */
+function renderDday(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const evs = myEvents()
+    .map(e => ({...e, d: new Date(e.date + 'T00:00:00')}))
+    .filter(e => e.d >= today)
+    .sort((a,b) => a.d - b.d)
+    .slice(0, 4);
+  document.getElementById('dday').innerHTML = evs.map(e => {
+    const diff = Math.round((e.d - today) / 86400000);
+    const dtxt = diff === 0 ? '<b>오늘!</b>' : `<b>D-${diff}</b>`;
+    return `<div class="dchip${diff === 0 ? ' today' : ''}">${esc(e.label)} ${dtxt}</div>`;
+  }).join('');
+}
+
+/* ---------- 결과 입력 시 축하 효과 ---------- */
+function onResult(i){
+  const r = v('result'+i);
+  if (r.includes('합격') && !r.includes('불합격') && !r.includes('대기')) confetti();
+}
+function confetti(){
+  const emojis = ['🎉','🎊','✨','🌸','⭐'];
+  for (let n = 0; n < 36; n++) {
+    const s = document.createElement('span');
+    s.className = 'confetti';
+    s.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    s.style.left = Math.random() * 100 + 'vw';
+    s.style.animationDuration = (2 + Math.random() * 2) + 's';
+    s.style.animationDelay = (Math.random() * .8) + 's';
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 4500);
+  }
+}
+
+/* ---------- 수능최저 판정 ---------- */
+function initGrades(){
+  const opts = '<option value="">-</option>' + [1,2,3,4,5,6,7,8,9].map(g => `<option>${g}</option>`).join('');
+  ['gKor','gMath','gEng','gTam1','gTam2','gHist'].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = opts;
+    el.onchange = saveGrades;
+  });
+  try {
+    const saved = JSON.parse(localStorage.getItem('susi_grades') || '{}');
+    Object.keys(saved).forEach(id => setV(id, saved[id]));
+  } catch(e){}
+}
+function saveGrades(){
+  const g = {};
+  ['gKor','gMath','gEng','gTam1','gTam2','gHist'].forEach(id => g[id] = v(id));
+  try { localStorage.setItem('susi_grades', JSON.stringify(g)); } catch(e){}
+}
+function evalMinAll(){
+  const kor = parseInt(v('gKor')), math = parseInt(v('gMath')), eng = parseInt(v('gEng'));
+  const t1 = parseInt(v('gTam1')), t2 = parseInt(v('gTam2')), hist = parseInt(v('gHist'));
+  const out = [];
+  for (let i = 1; i <= slotCount; i++) {
+    const u = v('univ'+i).trim();
+    if (!u) continue;
+    const n = parseInt(v('mrN'+i)), m = parseInt(v('mrM'+i));
+    if (!n || !m) { out.push(`<li class="mr-none">지원 ${i} ${esc(u)}: 최저 기준 미입력</li>`); continue; }
+    // 탐구 등급 계산
+    let tam = NaN;
+    const tMode = v('mrT'+i);
+    if (tMode === '2') {
+      if (!isNaN(t1) && !isNaN(t2)) tam = (t1 + t2) / 2;
+    } else {
+      if (!isNaN(t1) || !isNaN(t2)) tam = Math.min(isNaN(t1) ? 99 : t1, isNaN(t2) ? 99 : t2);
+    }
+    const areas = [kor, math, eng, tam].filter(x => !isNaN(x) && x < 99);
+    if (areas.length < n) { out.push(`<li class="mr-none">지원 ${i} ${esc(u)}: 등급 입력 부족 (국·수·영·탐 중 ${n}개 필요)</li>`); continue; }
+    const best = areas.slice().sort((a,b) => a-b).slice(0, n);
+    const sum = best.reduce((a,b) => a+b, 0);
+    const hReq = parseInt(v('mrH'+i));
+    const hOK = !hReq || (!isNaN(hist) && hist <= hReq);
+    const ok = sum <= m && hOK;
+    const hTxt = hReq ? (hOK ? '' : ` / 한국사 ${hReq}등급 이내 미충족`) : '';
+    out.push(`<li>지원 ${i} ${esc(u)}: ${n}합 ${sum}${Number.isInteger(sum) ? '' : ' (소수점)'} / 기준 ${m} → <span class="${ok ? 'mr-ok' : 'mr-no'}">${ok ? '충족 ✅' : '미충족 ❌'}</span>${hTxt}</li>`);
+  }
+  document.getElementById('minResults').innerHTML = out.join('') || '<li class="mr-none">지원 내역이 없습니다.</li>';
+}
+
+/* ---------- 면접 기출 공유 ---------- */
+async function loadQ(){
+  const code = v('code').trim();
+  if (!code) return showMsg('입력 코드를 먼저 입력하세요.', false);
+  try {
+    const res = await fetch(`${API_URL}?action=qlist&code=${encodeURIComponent(code)}`);
+    const data = await res.json();
+    if (!data.ok) { document.getElementById('qList').innerHTML = `<p class="notice">❌ ${esc(data.error)}</p>`; return; }
+    Q_ROWS = data.rows; // [시각, 대학, 학과, 전형명, 내용, '', id]
+    renderQ();
+  } catch (e) {
+    document.getElementById('qList').innerHTML = '<p class="notice">❌ 불러오기 실패. 인터넷 연결을 확인하세요.</p>';
+  }
+}
+function renderQ(){
+  const f = v('qFilter').trim();
+  const rows = Q_ROWS.filter(r => !f || String(r[1]).includes(f) || String(r[2]).includes(f));
+  document.getElementById('qList').innerHTML = rows.length
+    ? rows.map(r => `
+      <div class="q-item">
+        <div class="q-meta">🏫 <b>${esc(r[1])}</b> ${esc(r[2])} · ${esc(r[3])} · ${esc(r[0])}</div>
+        <div class="q-body">${esc(r[4])}</div>
+      </div>`).join('')
+    : '<p class="notice">아직 등록된 기출·후기가 없습니다. 첫 번째로 남겨보세요!</p>';
+}
+async function addQ(){
+  const sid = v('sid').trim(), code = v('code').trim();
+  if (!/^\d{5}$/.test(sid)) return showMsg('기출 등록에는 학번(5자리)이 필요합니다. (익명으로 표시됩니다)', false);
+  if (!code) return showMsg('입력 코드를 입력하세요.', false);
+  const univ = v('qUniv').trim(), content = v('qContent').trim();
+  if (!univ) return showMsg('기출을 남길 대학명을 입력하세요.', false);
+  if (!content) return showMsg('내용을 입력하세요.', false);
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'addq', sid, code, univ, major: v('qMajor').trim(), track: v('qTrack').trim(), content })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      setV('qContent', '');
+      showMsg('✅ 등록 완료! 고마워요, 친구들에게 큰 도움이 됩니다.', true);
+      loadQ();
+    } else showMsg('❌ ' + data.error, false);
+  } catch (e) { showMsg('❌ 등록 실패. 인터넷 연결을 확인하세요.', false); }
+}
+
+/* ---------- 내 일정 캘린더 ---------- */
+function myEvents(){
+  const evs = [];
+  for (let i = 1; i <= slotCount; i++) {
+    const u = v('univ'+i).trim();
+    if (!u) continue;
+    const short = u.replace(/대학교|대학/g, '');
+    if (v('interview'+i)) evs.push({date: v('interview'+i), kind:'면접', label:`${short} 면접`});
+    if (v('announce'+i)) evs.push({date: v('announce'+i), kind:'발표', label:`${short} 발표`});
+    if (v('waitlist'+i)) evs.push({date: v('waitlist'+i), kind:'충원', label:`${short} 충원`});
+  }
+  return evs;
+}
+
+function moveMonth(d){
+  calYM[1] += d;
+  if (calYM[1] < 0) { calYM[1] = 11; calYM[0]--; }
+  if (calYM[1] > 11) { calYM[1] = 0; calYM[0]++; }
+  renderCal();
+}
+
+function renderCal(){
+  if (!calYM) { const t = new Date(); calYM = [t.getFullYear(), t.getMonth()]; }
+  const [y, m] = calYM;
+  document.getElementById('calTitle').textContent = `${y}년 ${m+1}월`;
+  const evs = myEvents();
+  const byDate = {};
+  evs.forEach(e => { (byDate[e.date] = byDate[e.date] || []).push(e); });
+
+  const first = new Date(y, m, 1);
+  const startDow = first.getDay();
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  const todayStr = new Date().toISOString().slice(0,10);
+  let html = ['일','월','화','수','목','금','토'].map(d => `<div class="dow">${d}</div>`).join('');
+  for (let i = 0; i < startDow; i++) html += `<div class="day out"></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const items = (byDate[ds] || []).map(e => `<div class="ev ${e.kind}" title="${e.label}">${e.label}</div>`).join('');
+    html += `<div class="day${ds === todayStr ? ' today' : ''}"><span class="dnum">${d}</span>${items}</div>`;
+  }
+  document.getElementById('cal').innerHTML = html;
+}
+
+/* ---------- 초기화 ---------- */
+document.getElementById('univs').innerHTML = UNIV_LIST.map(u=>`<option value="${u}">`).join('');
+for (let i = 0; i < 6; i++) addSlot();
+initGrades();
+renderCal();
+renderDday();
+renderExamList();
+</script>
+</body>
+</html>
