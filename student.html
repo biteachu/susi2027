@@ -189,8 +189,8 @@
 <div class="card">
   <b style="font-size:.95rem;">✍ 기출·후기 남기기</b>
   <div class="row">
-    <div><label>대학명</label><input id="qUniv" list="univs" placeholder="예: 충남대학교"></div>
-    <div><label>모집단위(학과)</label><input id="qMajor" placeholder="예: 생물과학과"></div>
+    <div><label>대학명</label><input id="qUniv" list="univs" placeholder="예: 충북대학교"></div>
+    <div><label>모집단위(학과)</label><input id="qMajor" placeholder="예: 생물교육과"></div>
   </div>
   <label>전형명</label>
   <input id="qTrack" placeholder="예: 일반전형">
@@ -249,8 +249,8 @@ function addSlot(){
     <div class="prog"><div class="prog-fill" id="prog${i}"></div></div>
     <div class="slot-body">
       <div class="row">
-        <div><label>대학명</label><input id="univ${i}" list="univs" placeholder="예: 충남대학교" oninput="onUnivInput(${i})"></div>
-        <div><label>모집단위(학과)</label><input id="major${i}" placeholder="예: 생물과학과"></div>
+        <div><label>대학명</label><input id="univ${i}" list="univs" placeholder="예: 충북대학교" oninput="onUnivInput(${i})"></div>
+        <div><label>모집단위(학과)</label><input id="major${i}" placeholder="예: 생물교육과"></div>
       </div>
       <div class="row">
         <div><label>전형구분</label><select id="type${i}">${TYPE_LIST.map(t=>`<option>${t}</option>`).join('')}</select></div>
